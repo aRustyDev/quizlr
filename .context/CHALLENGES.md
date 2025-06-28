@@ -66,3 +66,21 @@ Each challenge should be documented with:
 **Status**: Resolved
 
 ---
+
+### 2025-06-28: Test-Driven Bug Discovery
+
+**Challenge**: Multiple scoring calculation bugs found when writing tests
+- Empty sessions returned incorrect scores in adaptive strategy
+- Difficulty weighted scoring didn't account for all questions
+- Time score calculation gave perfect score for no responses
+
+**Context**: Writing comprehensive test suite for existing quiz engine
+
+**Solution**: 
+- Fixed adaptive scoring to return 0 for time/consistency when no responses
+- Updated difficulty scoring to calculate max_possible from all questions
+- Added explicit checks for empty response scenarios
+
+**Status**: Resolved
+
+---

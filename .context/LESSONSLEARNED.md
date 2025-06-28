@@ -40,6 +40,32 @@ Each lesson should include:
 
 ---
 
+### 2025-06-28: Retroactive TDD Reveals Hidden Bugs
+
+**Lesson**: Writing comprehensive tests after implementation often reveals subtle bugs that weren't apparent during initial development
+
+**Context**: Added test suite for existing quiz engine code and discovered several scoring calculation issues
+
+**Application**:
+- Always write tests, even for "simple" calculations
+- Edge cases (empty sessions, no responses) need explicit handling
+- Test-driven development would have caught these issues earlier
+
+---
+
+### 2025-06-28: Test Organization in Rust
+
+**Lesson**: Rust's module system allows clean separation of test code while maintaining access to private implementation details
+
+**Context**: Organized 60+ tests across separate test modules for different components
+
+**Application**:
+- Use separate test modules for logical groupings (questions, sessions, scoring)
+- Keep test files in same directory as implementation for easy navigation
+- Use descriptive test names that explain the scenario being tested
+
+---
+
 ### 2025-06-28: Library + Binary Pattern for Reusability
 
 **Lesson**: Separating core logic into a library crate enables maximum code reuse across different platforms
