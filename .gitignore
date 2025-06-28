@@ -34,7 +34,7 @@ node_modules/
 *.wasm
 *.js
 *.css
-!style/*.css
+!**/style/*.css
 
 # Test coverage
 *.profraw
