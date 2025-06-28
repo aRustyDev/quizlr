@@ -1,0 +1,56 @@
+[book]
+title = "Quizlr Documentation"
+authors = ["Quizlr Contributors"]
+language = "en"
+multilingual = false
+src = "src"
+description = "Documentation for Quizlr - An adaptive learning quiz application"
+
+[build]
+build-dir = "book"
+create-missing = true
+use-default-preprocessors = true
+
+[preprocessor.index]
+
+[preprocessor.links]
+
+[output.html]
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+curly-quotes = true
+copy-fonts = true
+additional-css = []
+additional-js = []
+no-section-label = false
+git-repository-url = "https://github.com/yourusername/quizlr"
+git-repository-icon = "fa-github"
+edit-url-template = "https://github.com/yourusername/quizlr/edit/main/docs/{path}"
+site-url = "/quizlr/"
+cname = ""
+input-404 = ""
+
+[output.html.print]
+enable = true
+
+[output.html.fold]
+enable = true
+level = 0
+
+[output.html.playground]
+editable = false
+copyable = true
+copy-js = true
+line-numbers = true
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+copy-js = true
