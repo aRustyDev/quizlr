@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = [
+    "quizlr-core",
+    "quizlr-web",
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Quizlr Contributors"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/quizlr"
+
+[workspace.dependencies]
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Async runtime
+tokio = { version = "1.42", features = ["macros", "rt", "sync"] }
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde", "wasm-bindgen"] }
+
+# UUID generation
+uuid = { version = "1.11", features = ["v4", "serde", "js"] }
+
+# Configuration
+config = "0.14"
+
+# Testing
+mockall = "0.13"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true

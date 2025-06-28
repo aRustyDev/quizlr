@@ -1,0 +1,42 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# Leptos
+dist/
+site/
+pkg/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.wasm
+*.js
+*.css
+!style/*.css
+
+# Test coverage
+*.profraw
+*.profdata
+coverage/
