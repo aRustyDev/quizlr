@@ -111,7 +111,7 @@ impl ScoringStrategy {
             .collect();
         
         for response in &session.responses {
-            if let Some(question) = question_map.get(&response.question_id) {
+            if let Some(_question) = question_map.get(&response.question_id) {
                 let base_points = if response.is_correct { 1.0 } else { 0.0 };
                 let time_penalty = if response.time_taken_seconds > base_time_seconds {
                     (response.time_taken_seconds - base_time_seconds) as f32 * penalty_per_second
@@ -153,50 +153,49 @@ impl ScoringStrategy {
     ) -> Score {
         let mut total_score = 0.0;
         let mut max_possible = 0.0;
+        
+        // Calculate max possible from all questions
+        for question in questions {
+            let multiplier = match question.difficulty {
+                d if d < 0.33 => easy_multiplier,
+                d if d < 0.67 => medium_multiplier,
+                _ => hard_multiplier,
+            };
+            max_possible += multiplier;
+        }
+        
+        // Add scores for correct answers
         let question_map: std::collections::HashMap<_, _> = questions.iter()
             .map(|q| (q.id, q))
             .collect();
-        
+            
         for response in &session.responses {
             if let Some(question) = question_map.get(&response.question_id) {
-                let multiplier = match question.difficulty {
-                    d if d < 0.33 => easy_multiplier,
-                    d if d < 0.67 => medium_multiplier,
-                    _ => hard_multiplier,
-                };
-                
-                max_possible += multiplier;
                 if response.is_correct {
+                    let multiplier = match question.difficulty {
+                        d if d < 0.33 => easy_multiplier,
+                        d if d < 0.67 => medium_multiplier,
+                        _ => hard_multiplier,
+                    };
                     total_score += multiplier;
                 }
             }
         }
         
-        // Account for skipped questions
-        for &question_index in &session.skipped_questions {
-            if let Some(question) = questions.get(question_index) {
-                let multiplier = match question.difficulty {
-                    d if d < 0.33 => easy_multiplier,
-                    d if d < 0.67 => medium_multiplier,
-                    _ => hard_multiplier,
-                };
-                max_possible += multiplier;
-            }
-        }
-        
         let weighted_score = if max_possible > 0.0 { total_score / max_possible } else { 0.0 };
+        let raw_score = self.simple_score(session, questions).raw_score;
         
         Score {
-            raw_score: self.simple_score(session, questions).raw_score,
+            raw_score,
             weighted_score,
             percentile: None,
             time_bonus: 0.0,
-            difficulty_bonus: weighted_score - self.simple_score(session, questions).raw_score,
+            difficulty_bonus: weighted_score - raw_score,
             streak_bonus: 0.0,
             components: ScoreComponents {
-                correctness: self.simple_score(session, questions).raw_score,
+                correctness: raw_score,
                 speed: 0.0,
-                difficulty: weighted_score - self.simple_score(session, questions).raw_score,
+                difficulty: weighted_score - raw_score,
                 consistency: 0.0,
             },
         }
@@ -217,13 +216,17 @@ impl ScoringStrategy {
         let correctness_score = self.simple_score(session, questions).raw_score;
         
         // Calculate time score
-        let avg_time: f32 = session.responses.iter()
-            .map(|r| r.time_taken_seconds as f32)
-            .sum::<f32>() / session.responses.len().max(1) as f32;
-        let expected_avg_time: f32 = questions.iter()
-            .map(|q| q.estimated_time_seconds as f32)
-            .sum::<f32>() / questions.len().max(1) as f32;
-        let time_score = (expected_avg_time / avg_time.max(1.0)).min(1.0);
+        let time_score = if session.responses.is_empty() {
+            0.0 // No time score if no responses
+        } else {
+            let avg_time: f32 = session.responses.iter()
+                .map(|r| r.time_taken_seconds as f32)
+                .sum::<f32>() / session.responses.len() as f32;
+            let expected_avg_time: f32 = questions.iter()
+                .map(|q| q.estimated_time_seconds as f32)
+                .sum::<f32>() / questions.len().max(1) as f32;
+            (expected_avg_time / avg_time.max(1.0)).min(1.0)
+        };
         
         // Calculate difficulty score
         let difficulty_score = self.calculate_difficulty_score(session, questions);
@@ -304,8 +307,11 @@ impl ScoringStrategy {
     }
     
     fn calculate_consistency_score(&self, responses: &[QuestionResponse]) -> f32 {
-        if responses.len() < 2 {
-            return 1.0; // Perfect consistency with 0 or 1 responses
+        if responses.is_empty() {
+            return 0.0; // No consistency score without responses
+        }
+        if responses.len() == 1 {
+            return 1.0; // Perfect consistency with 1 response
         }
         
         // Calculate variance in response times

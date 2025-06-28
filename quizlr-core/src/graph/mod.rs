@@ -1,4 +1,4 @@
-use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::graph::DiGraph;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -23,6 +23,7 @@ pub enum RelationshipType {
 }
 
 pub struct KnowledgeGraph {
+    #[allow(dead_code)] // Will be used in future implementations
     graph: DiGraph<TopicNode, TopicEdge>,
 }
 

@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Comprehensive test suite for quiz engine following TDD principles
+  - 60 tests covering all question types, quiz management, sessions, and scoring
+  - Tests for edge cases and error conditions
+  - Performance and consistency scoring tests
+
+### Fixed
+- Corrected scoring calculations for empty sessions
+- Fixed difficulty weighted scoring to consider all questions
+- Improved adaptive scoring to handle no-response scenarios
+- Fixed unused variable and import warnings
+
+### Added
 - Initial project structure with workspace configuration
 - Core library (`quizlr-core`) with quiz engine implementation
   - Question types: TrueFalse, MultipleChoice, MultiSelect, FillInTheBlank, MatchPairs, InteractiveInterview, TopicExplanation
