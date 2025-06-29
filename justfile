@@ -5,7 +5,7 @@ default:
     @just --list
 
 # Development
-dev: setup
+dev: setup compile-scss
     @echo "Starting development server..."
     cd quizlr-web && trunk serve --port 3001
 
@@ -40,9 +40,18 @@ build-core:
     cargo build --package quizlr-core --release
 
 # Build web frontend
-build-web: setup-web
+build-web: setup-web compile-scss
     @echo "Building web frontend..."
     cd quizlr-web && trunk build
+
+# Compile SCSS to CSS
+compile-scss:
+    @echo "Compiling SCSS to CSS..."
+    @if command -v sass >/dev/null 2>&1; then \
+        sass quizlr-web/style/main.scss quizlr-web/style/main.css; \
+    else \
+        echo "Warning: sass not installed, skipping SCSS compilation"; \
+    fi
 
 # Build documentation
 build-docs:
@@ -178,6 +187,16 @@ l: lint
 f: fmt
 b: build
 c: clean
+
+# Watch SCSS files for changes
+watch-scss:
+    @echo "Watching SCSS files for changes..."
+    @if command -v sass >/dev/null 2>&1; then \
+        sass --watch quizlr-web/style/main.scss:quizlr-web/style/main.css; \
+    else \
+        echo "Error: sass not installed, run 'just setup-web' first"; \
+        exit 1; \
+    fi
 
 # Help
 help:
