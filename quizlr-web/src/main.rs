@@ -1,5 +1,6 @@
 use leptos::prelude::*;
-use leptos_router::components::Router;
+use wasm_bindgen::JsCast;
+use web_sys::HtmlElement;
 
 mod app;
 
@@ -9,12 +10,13 @@ fn main() {
     console_error_panic_hook::set_once();
     // Initialize console logging
     _ = console_log::init();
-    
-    leptos::mount::mount_to_body(|| {
-        view! {
-            <Router>
-                <App/>
-            </Router>
-        }
-    });
+
+    // Mount to the #app div instead of body
+    let app_element = document()
+        .get_element_by_id("app")
+        .unwrap()
+        .dyn_into::<HtmlElement>()
+        .unwrap();
+
+    leptos::mount::mount_to(app_element, || view! { <App/> }).forget();
 }
