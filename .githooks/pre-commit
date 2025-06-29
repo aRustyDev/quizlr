@@ -1,0 +1,52 @@
+#!/bin/bash
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if we're in the right directory
+if [ ! -f "Cargo.toml" ]; then
+    echo "❌ Error: Not in project root directory"
+    exit 1
+fi
+
+# Run formatting check
+echo "📋 Checking code formatting..."
+if ! cargo fmt --all -- --check > /dev/null 2>&1; then
+    echo "❌ Code formatting issues detected!"
+    echo "💡 Run 'cargo fmt --all' to fix formatting"
+    exit 1
+fi
+
+# Run clippy
+echo "🔧 Running clippy..."
+if ! cargo clippy --workspace --all-targets --all-features -- -D warnings > /dev/null 2>&1; then
+    echo "❌ Clippy warnings detected!"
+    echo "💡 Run 'cargo clippy --workspace --all-targets --all-features -- -D warnings' to see details"
+    exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+if ! cargo test --workspace --quiet > /dev/null 2>&1; then
+    echo "❌ Tests failed!"
+    echo "💡 Run 'cargo test --workspace' to see details"
+    exit 1
+fi
+
+# Check for TODO/FIXME comments
+echo "📝 Checking for TODO/FIXME comments..."
+if grep -r "TODO\|FIXME" --include="*.rs" --include="*.toml" src/ 2>/dev/null; then
+    echo "⚠️  Warning: TODO/FIXME comments found (not blocking)"
+fi
+
+# Check dependency licenses
+echo "📜 Checking dependency licenses..."
+if command -v cargo-license > /dev/null 2>&1; then
+    if ! cargo license --json > /dev/null 2>&1; then
+        echo "⚠️  Warning: Could not check licenses (not blocking)"
+    fi
+else
+    echo "ℹ️  cargo-license not installed, skipping license check"
+fi
+
+echo "✅ All pre-commit checks passed!"

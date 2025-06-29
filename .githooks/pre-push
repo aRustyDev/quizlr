@@ -1,0 +1,56 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Check if we're in the right directory
+if [ ! -f "Cargo.toml" ]; then
+    echo "❌ Error: Not in project root directory"
+    exit 1
+fi
+
+# Run full test suite
+echo "🧪 Running full test suite..."
+if ! cargo test --workspace --all-features; then
+    echo "❌ Tests failed!"
+    exit 1
+fi
+
+# Check for security vulnerabilities
+echo "🔒 Checking for security vulnerabilities..."
+if command -v cargo-audit > /dev/null 2>&1; then
+    if ! cargo audit; then
+        echo "❌ Security vulnerabilities detected!"
+        echo "💡 Run 'cargo audit fix' to attempt automatic fixes"
+        exit 1
+    fi
+else
+    echo "ℹ️  cargo-audit not installed, install with: cargo install cargo-audit"
+fi
+
+# Build documentation
+echo "📚 Building documentation..."
+if ! cargo doc --workspace --no-deps --quiet; then
+    echo "❌ Documentation build failed!"
+    exit 1
+fi
+
+# Verify WASM build
+echo "🌐 Verifying WASM build..."
+if ! cargo build --package quizlr-core --target wasm32-unknown-unknown --no-default-features --features wasm --quiet; then
+    echo "❌ WASM build failed!"
+    exit 1
+fi
+
+# Check code coverage (if tarpaulin is installed)
+if command -v cargo-tarpaulin > /dev/null 2>&1; then
+    echo "📊 Checking code coverage..."
+    coverage=$(cargo tarpaulin --workspace --print-summary 2>/dev/null | grep "Coverage" | awk '{print $2}' | sed 's/%//')
+    if (( $(echo "$coverage < 80" | bc -l) )); then
+        echo "⚠️  Warning: Code coverage is below 80% (current: $coverage%)"
+    fi
+else
+    echo "ℹ️  cargo-tarpaulin not installed, skipping coverage check"
+fi
+
+echo "✅ All pre-push checks passed!"
