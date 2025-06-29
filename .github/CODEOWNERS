@@ -1,0 +1,24 @@
+# Code Owners for Quizlr
+# These owners will be automatically requested for review
+
+# Global owners
+* @yourusername
+
+# Core library
+/quizlr-core/ @yourusername
+
+# Web frontend
+/quizlr-web/ @yourusername
+
+# Documentation
+/docs/ @yourusername
+*.md @yourusername
+
+# CI/CD
+/.github/ @yourusername
+/scripts/ @yourusername
+
+# Configuration files
+Cargo.toml @yourusername
+Cargo.lock @yourusername
+justfile @yourusername
