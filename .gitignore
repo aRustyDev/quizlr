@@ -40,3 +40,9 @@ node_modules/
 *.profraw
 *.profdata
 coverage/
+
+# Generated documentation
+docs/book/
+
+# Temporary files
+*#*
