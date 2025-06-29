@@ -7,7 +7,7 @@ default:
 # Development
 dev: setup
     @echo "Starting development server..."
-    cd quizlr-web && trunk serve --open
+    cd quizlr-web && trunk serve --port 3001
 
 # Run all tests
 test:
@@ -42,7 +42,7 @@ build-core:
 # Build web frontend
 build-web: setup-web
     @echo "Building web frontend..."
-    cd quizlr-web && trunk build --release
+    cd quizlr-web && trunk build
 
 # Build documentation
 build-docs:
@@ -62,7 +62,12 @@ docs-open: setup-docs
 # Deploy docs to GitHub Pages
 docs-deploy: build-docs
     @echo "Deploying documentation to GitHub Pages..."
-    @echo "TODO: Add gh-pages deployment"
+    @if [ -z "${GITHUB_ACTIONS}" ]; then \
+        echo "Error: This target is designed to run in GitHub Actions."; \
+        echo "For local testing, use 'just docs-open' instead."; \
+        exit 1; \
+    fi
+    @echo "Documentation built successfully. Deploy step will be handled by GitHub Actions."
 
 # Release recipes
 release-patch: test lint
@@ -95,6 +100,8 @@ clean:
 
 # Setup development environment
 setup: setup-rust setup-web setup-docs
+    @echo "Installing git hooks..."
+    ./scripts/install-hooks.sh || true
     @echo "Development environment ready!"
 
 # Install Rust toolchain and tools
@@ -104,12 +111,20 @@ setup-rust:
     @echo "Installing cargo tools..."
     cargo install cargo-watch || true
     cargo install cargo-edit || true
+    cargo install cargo-audit || true
+    cargo install cargo-tarpaulin || true
 
 # Install web development tools
 setup-web:
     @echo "Installing web development tools..."
-    cargo install trunk || true
+    cargo install trunk --version 0.21.7 --locked || true
     cargo install wasm-pack || true
+    @echo "Installing sass for SCSS compilation..."
+    @if command -v brew >/dev/null 2>&1; then \
+        brew install sass/sass/sass || true; \
+    else \
+        cargo install grass || true; \
+    fi
 
 # Install documentation tools
 setup-docs:
@@ -136,9 +151,24 @@ doc:
     @echo "Building API documentation..."
     cargo doc --workspace --no-deps --open
 
+# Run E2E tests
+test-e2e: setup-e2e
+    @echo "Running E2E tests..."
+    cd e2e && npm test
+
+# Install E2E test dependencies
+setup-e2e:
+    @echo "Setting up E2E tests..."
+    cd e2e && npm install
+    cd e2e && npx playwright install
+
 # CI/CD checks (what CI would run)
-ci: lint test check
+ci: lint test check build test-e2e build-docs
     @echo "All CI checks passed!"
+
+# Quick CI checks (without E2E tests)
+ci-quick: lint test check build
+    @echo "Quick CI checks passed!"
 
 # Development shortcuts
 d: dev
