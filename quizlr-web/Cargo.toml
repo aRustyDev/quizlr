@@ -61,7 +61,7 @@ js-sys = "0.3"
 # d3-rs = { version = "0.1", optional = true } # Not available yet, will use JS interop
 
 # IndexedDB
-indexed_db_futures = "0.5"
+indexed_db_futures = "0.6"
 
 # Styling
 stylers = "0.3"
