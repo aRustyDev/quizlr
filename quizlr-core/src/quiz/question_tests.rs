@@ -1,9 +1,9 @@
 //! Comprehensive tests for question types and validation
-//! 
+//!
 //! DEVNOTES: Testing all question types and edge cases to ensure
 //! proper validation and behavior across the quiz engine
 
-use crate::quiz::question::{Question, QuestionType, Answer, Citation, FollowUpRule};
+use crate::quiz::question::{Answer, Citation, FollowUpRule, Question, QuestionType};
 use uuid::Uuid;
 
 #[cfg(test)]
@@ -23,14 +23,8 @@ mod question_type_tests {
             0.4,
         );
 
-        assert_eq!(
-            question.validate_answer(&Answer::TrueFalse(false)).unwrap(),
-            true
-        );
-        assert_eq!(
-            question.validate_answer(&Answer::TrueFalse(true)).unwrap(),
-            false
-        );
+        assert!(question.validate_answer(&Answer::TrueFalse(false)).unwrap());
+        assert!(!question.validate_answer(&Answer::TrueFalse(true)).unwrap());
     }
 
     #[test]
@@ -39,11 +33,7 @@ mod question_type_tests {
         let question = Question::new(
             QuestionType::MultipleChoice {
                 question: "Which is a Rust keyword?".to_string(),
-                options: vec![
-                    "var".to_string(),
-                    "let".to_string(),
-                    "const".to_string(),
-                ],
+                options: vec!["var".to_string(), "let".to_string(), "const".to_string()],
                 correct_index: 1,
                 explanation: None,
             },
@@ -82,12 +72,20 @@ mod question_type_tests {
         );
 
         // Same indices, different order
-        assert!(question.validate_answer(&Answer::MultiSelect(vec![0, 2])).unwrap());
-        assert!(question.validate_answer(&Answer::MultiSelect(vec![2, 0])).unwrap());
-        
+        assert!(question
+            .validate_answer(&Answer::MultiSelect(vec![0, 2]))
+            .unwrap());
+        assert!(question
+            .validate_answer(&Answer::MultiSelect(vec![2, 0]))
+            .unwrap());
+
         // Wrong indices
-        assert!(!question.validate_answer(&Answer::MultiSelect(vec![1, 3])).unwrap());
-        assert!(!question.validate_answer(&Answer::MultiSelect(vec![0])).unwrap());
+        assert!(!question
+            .validate_answer(&Answer::MultiSelect(vec![1, 3]))
+            .unwrap());
+        assert!(!question
+            .validate_answer(&Answer::MultiSelect(vec![0]))
+            .unwrap());
     }
 
     #[test]
@@ -214,7 +212,10 @@ mod question_type_tests {
 
         let result = question.validate_answer(&Answer::MultipleChoice(0));
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Answer type does not match question type");
+        assert_eq!(
+            result.unwrap_err(),
+            "Answer type does not match question type"
+        );
     }
 
     #[test]
@@ -244,10 +245,7 @@ mod question_type_tests {
         assert!(question.tags.contains(&"rust".to_string()));
         assert_eq!(question.difficulty, 0.7);
         assert_eq!(question.estimated_time_seconds, 60);
-        assert_eq!(
-            question.get_explanation(),
-            Some("Test explanation")
-        );
+        assert_eq!(question.get_explanation(), Some("Test explanation"));
     }
 
     #[test]
@@ -274,7 +272,10 @@ mod question_type_tests {
         question.citations.push(citation.clone());
 
         assert_eq!(question.citations.len(), 1);
-        assert_eq!(question.citations[0].source, "The Rust Programming Language");
+        assert_eq!(
+            question.citations[0].source,
+            "The Rust Programming Language"
+        );
         assert_eq!(question.citations[0].confidence, 0.95);
     }
 
@@ -284,7 +285,8 @@ mod question_type_tests {
         let follow_up_rules = vec![
             FollowUpRule {
                 condition: "mentions ownership".to_string(),
-                follow_up_question: "Can you explain how borrowing relates to ownership?".to_string(),
+                follow_up_question: "Can you explain how borrowing relates to ownership?"
+                    .to_string(),
                 weight: 0.8,
             },
             FollowUpRule {
@@ -306,7 +308,10 @@ mod question_type_tests {
         );
 
         // Verify the question was created correctly
-        if let QuestionType::InteractiveInterview { follow_up_rules, .. } = &question.question_type {
+        if let QuestionType::InteractiveInterview {
+            follow_up_rules, ..
+        } = &question.question_type
+        {
             assert_eq!(follow_up_rules.len(), 2);
             assert_eq!(follow_up_rules[0].weight, 0.8);
         } else {
@@ -333,7 +338,12 @@ mod question_type_tests {
         );
 
         // Verify structure
-        if let QuestionType::TopicExplanation { key_concepts, min_word_count, .. } = &question.question_type {
+        if let QuestionType::TopicExplanation {
+            key_concepts,
+            min_word_count,
+            ..
+        } = &question.question_type
+        {
             assert_eq!(key_concepts.len(), 3);
             assert_eq!(*min_word_count, 100);
         } else {

@@ -3,11 +3,11 @@
 //! DEVNOTES: Testing all scoring strategies to ensure accurate
 //! and fair assessment of quiz performance
 
-use crate::quiz::question::{Question, QuestionType, Answer};
-use crate::quiz::session::{QuizSession, QuestionResponse};
+use crate::quiz::question::{Answer, Question, QuestionType};
 use crate::quiz::scoring::ScoringStrategy;
-use uuid::Uuid;
+use crate::quiz::session::{QuestionResponse, QuizSession};
 use chrono::Utc;
+use uuid::Uuid;
 
 #[cfg(test)]
 mod scoring_strategy_tests {
@@ -38,10 +38,9 @@ mod scoring_strategy_tests {
         times: Vec<u32>,
     ) -> QuizSession {
         let mut session = QuizSession::new(Uuid::new_v4(), None);
-        
-        for ((question, is_correct), time) in questions.iter()
-            .zip(correct_mask.iter())
-            .zip(times.iter())
+
+        for ((question, is_correct), time) in
+            questions.iter().zip(correct_mask.iter()).zip(times.iter())
         {
             session.responses.push(QuestionResponse {
                 question_id: question.id,
@@ -52,7 +51,7 @@ mod scoring_strategy_tests {
                 submitted_at: Utc::now(),
             });
         }
-        
+
         session
     }
 
@@ -60,14 +59,11 @@ mod scoring_strategy_tests {
     fn test_simple_scoring_all_correct() {
         let strategy = ScoringStrategy::Simple;
         let questions = create_questions_with_difficulties(vec![0.3, 0.5, 0.7]);
-        let session = create_session_with_responses(
-            &questions,
-            vec![true, true, true],
-            vec![30, 45, 60],
-        );
+        let session =
+            create_session_with_responses(&questions, vec![true, true, true], vec![30, 45, 60]);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         assert_eq!(score.raw_score, 1.0); // 3/3
         assert_eq!(score.weighted_score, 1.0);
         assert_eq!(score.time_bonus, 0.0);
@@ -87,7 +83,7 @@ mod scoring_strategy_tests {
         );
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         assert_eq!(score.raw_score, 0.5); // 2/4
         assert_eq!(score.weighted_score, 0.5);
     }
@@ -99,7 +95,7 @@ mod scoring_strategy_tests {
         let session = QuizSession::new(Uuid::new_v4(), None);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         assert_eq!(score.raw_score, 0.0);
         assert_eq!(score.weighted_score, 0.0);
     }
@@ -110,7 +106,7 @@ mod scoring_strategy_tests {
             base_time_seconds: 60,
             penalty_per_second: 0.01,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.5, 0.5, 0.5]);
         let session = create_session_with_responses(
             &questions,
@@ -119,7 +115,7 @@ mod scoring_strategy_tests {
         );
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // First question: 1.0 (no penalty, under base time)
         // Second question: 1.0 (exactly base time)
         // Third question: 1.0 - (90-60)*0.01 = 0.7
@@ -134,7 +130,7 @@ mod scoring_strategy_tests {
             base_time_seconds: 60,
             penalty_per_second: 0.02,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.5, 0.5]);
         let session = create_session_with_responses(
             &questions,
@@ -143,7 +139,7 @@ mod scoring_strategy_tests {
         );
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // First question: 0 (incorrect, no points regardless of time)
         // Second question: 1.0 (correct and fast)
         // Total: 1.0 / 2 = 0.5
@@ -157,17 +153,14 @@ mod scoring_strategy_tests {
             medium_multiplier: 1.5,
             hard_multiplier: 2.0,
         };
-        
+
         // Easy (< 0.33), Medium (0.33-0.67), Hard (>= 0.67)
         let questions = create_questions_with_difficulties(vec![0.2, 0.5, 0.8]);
-        let session = create_session_with_responses(
-            &questions,
-            vec![true, true, true],
-            vec![30, 45, 60],
-        );
+        let session =
+            create_session_with_responses(&questions, vec![true, true, true], vec![30, 45, 60]);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // Easy: 1.0 * 1.0 = 1.0
         // Medium: 1.0 * 1.5 = 1.5
         // Hard: 1.0 * 2.0 = 2.0
@@ -184,7 +177,7 @@ mod scoring_strategy_tests {
             medium_multiplier: 1.5,
             hard_multiplier: 2.0,
         };
-        
+
         // Answer hard questions correctly, miss easy ones
         let questions = create_questions_with_difficulties(vec![0.2, 0.5, 0.8]);
         let session = create_session_with_responses(
@@ -194,7 +187,7 @@ mod scoring_strategy_tests {
         );
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // Max possible: 1.0 + 1.5 + 2.0 = 4.5
         // Score: 0 + 1.5 + 2.0 = 3.5
         // Weighted: 3.5 / 4.5 = 0.778
@@ -212,19 +205,19 @@ mod scoring_strategy_tests {
             medium_multiplier: 1.5,
             hard_multiplier: 2.0,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.2, 0.5, 0.8]);
         let mut session = create_session_with_responses(
             &questions[..2], // Only answer first two
             vec![true, true],
             vec![30, 45],
         );
-        
+
         // Skip the hard question
         session.skipped_questions.push(2);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // Max possible: Easy (1.0) + Medium (1.5) + Hard (2.0) = 4.5
         // Score: Easy (1.0) + Medium (1.5) = 2.5
         // Total: 2.5 / 4.5 = 0.556
@@ -239,7 +232,7 @@ mod scoring_strategy_tests {
             streak_weight: 0.2,
             consistency_weight: 0.1,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.3, 0.5, 0.7, 0.8]);
         let session = create_session_with_responses(
             &questions,
@@ -248,13 +241,13 @@ mod scoring_strategy_tests {
         );
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // Verify all components are calculated
         assert!(score.components.correctness > 0.0);
         assert!(score.components.speed > 0.0);
         assert!(score.components.difficulty > 0.0);
         assert!(score.components.consistency > 0.0);
-        
+
         // Weighted score should be between raw score and 1.0
         assert!(score.weighted_score >= score.raw_score);
         assert!(score.weighted_score <= 1.0);
@@ -268,9 +261,9 @@ mod scoring_strategy_tests {
             streak_weight: 1.0,
             consistency_weight: 0.0,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.5; 6]);
-        
+
         // Pattern: correct, correct, wrong, correct, correct, correct
         let session = create_session_with_responses(
             &questions,
@@ -279,11 +272,11 @@ mod scoring_strategy_tests {
         );
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // Max streak is 3 (last three correct)
         // Streak score = 3/6 = 0.5
         let expected_streak_score = 0.5;
-        
+
         // Since only streak weight is 1.0, the bonus should reflect this
         assert!((score.streak_bonus - expected_streak_score).abs() < 0.1);
     }
@@ -296,29 +289,25 @@ mod scoring_strategy_tests {
             streak_weight: 0.0,
             consistency_weight: 1.0,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.5; 4]);
-        
+
         // Very consistent times
-        let consistent_session = create_session_with_responses(
-            &questions,
-            vec![true; 4],
-            vec![60, 61, 59, 60],
-        );
-        
+        let consistent_session =
+            create_session_with_responses(&questions, vec![true; 4], vec![60, 61, 59, 60]);
+
         let consistent_score = strategy.calculate_score(&consistent_session, &questions);
-        
+
         // Very inconsistent times
-        let inconsistent_session = create_session_with_responses(
-            &questions,
-            vec![true; 4],
-            vec![30, 90, 45, 120],
-        );
-        
+        let inconsistent_session =
+            create_session_with_responses(&questions, vec![true; 4], vec![30, 90, 45, 120]);
+
         let inconsistent_score = strategy.calculate_score(&inconsistent_session, &questions);
-        
+
         // Consistent timing should score higher
-        assert!(consistent_score.components.consistency > inconsistent_score.components.consistency);
+        assert!(
+            consistent_score.components.consistency > inconsistent_score.components.consistency
+        );
     }
 
     #[test]
@@ -329,16 +318,12 @@ mod scoring_strategy_tests {
             streak_weight: 0.0,
             consistency_weight: 0.0,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.5, 0.5]);
-        let session = create_session_with_responses(
-            &questions,
-            vec![true, false],
-            vec![60, 60],
-        );
+        let session = create_session_with_responses(&questions, vec![true, false], vec![60, 60]);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         // With all weights at 0, weighted score should equal raw score
         assert_eq!(score.weighted_score, score.raw_score);
         assert_eq!(score.raw_score, 0.5); // 1/2 correct
@@ -364,14 +349,18 @@ mod scoring_strategy_tests {
                 consistency_weight: 0.5,
             },
         ];
-        
+
         let questions = create_questions_with_difficulties(vec![0.5]);
         let empty_session = QuizSession::new(Uuid::new_v4(), None);
-        
+
         for (i, strategy) in strategies.into_iter().enumerate() {
             let score = strategy.calculate_score(&empty_session, &questions);
             assert_eq!(score.raw_score, 0.0, "Strategy {} raw score mismatch", i);
-            assert_eq!(score.weighted_score, 0.0, "Strategy {} weighted score mismatch", i);
+            assert_eq!(
+                score.weighted_score, 0.0,
+                "Strategy {} weighted score mismatch",
+                i
+            );
         }
     }
 
@@ -383,20 +372,16 @@ mod scoring_strategy_tests {
             streak_weight: 0.2,
             consistency_weight: 0.2,
         };
-        
+
         let questions = create_questions_with_difficulties(vec![0.5]);
-        let session = create_session_with_responses(
-            &questions,
-            vec![true],
-            vec![60],
-        );
+        let session = create_session_with_responses(&questions, vec![true], vec![60]);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         assert_eq!(score.raw_score, 1.0);
         assert_eq!(score.components.correctness, 1.0);
         assert_eq!(score.components.consistency, 1.0); // Perfect consistency with 1 response
-        
+
         // Streak score should be 1.0 (1 correct out of 1)
         assert_eq!(score.components.speed, 1.0); // Assuming on target time
     }
@@ -409,7 +394,7 @@ mod scoring_strategy_tests {
         let session = create_session_with_responses(&questions, vec![true], vec![60]);
 
         let score = strategy.calculate_score(&session, &questions);
-        
+
         assert!(score.percentile.is_none()); // Not implemented yet
     }
 }

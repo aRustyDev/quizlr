@@ -1,18 +1,18 @@
-pub mod question;
-pub mod quiz;
-pub mod session;
-pub mod scoring;
+mod question;
+mod quiz_impl;
+mod scoring;
+mod session;
 
 #[cfg(test)]
 mod question_tests;
 #[cfg(test)]
-mod quiz_tests;
-#[cfg(test)]
-mod session_tests;
+mod quiz_impl_tests;
 #[cfg(test)]
 mod scoring_tests;
+#[cfg(test)]
+mod session_tests;
 
-pub use question::{Question, QuestionType, Answer};
-pub use quiz::{Quiz, QuizBuilder};
-pub use session::{QuizSession, SessionState};
+pub use question::{Answer, Question, QuestionType};
+pub use quiz_impl::{Quiz, QuizBuilder};
 pub use scoring::{Score, ScoringStrategy};
+pub use session::{QuizSession, SessionState};

@@ -1,17 +1,26 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-pub mod quiz;
-pub mod curriculum;
 pub mod adaptive;
-pub mod llm;
-pub mod storage;
-pub mod auth;
-pub mod graph;
+pub mod curriculum;
 pub mod error;
+pub mod graph;
+pub mod quiz;
+
+// Features that require networking (not available in WASM)
+#[cfg(feature = "native")]
+pub mod auth;
+#[cfg(feature = "native")]
+pub mod llm;
+#[cfg(feature = "native")]
+pub mod storage;
 
 // FFI module for future iOS/Android support
 // #[cfg(not(target_arch = "wasm32"))]
 // pub mod ffi;
+
+// Test utilities (only available in tests)
+#[cfg(test)]
+pub mod test_utils;
 
 pub use error::{QuizlrError, Result};
 

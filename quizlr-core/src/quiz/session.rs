@@ -1,8 +1,8 @@
+use super::{Answer, Question};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
 use std::collections::HashMap;
-use super::{Question, Answer};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SessionState {
@@ -56,7 +56,7 @@ impl QuizSession {
             metadata: HashMap::new(),
         }
     }
-    
+
     pub fn start(&mut self) -> Result<(), String> {
         match self.state {
             SessionState::NotStarted => {
@@ -68,7 +68,7 @@ impl QuizSession {
             _ => Err("Session already started".to_string()),
         }
     }
-    
+
     pub fn pause(&mut self) -> Result<(), String> {
         match self.state {
             SessionState::InProgress => {
@@ -79,12 +79,12 @@ impl QuizSession {
             _ => Err("Can only pause an in-progress session".to_string()),
         }
     }
-    
+
     pub fn resume(&mut self) -> Result<(), String> {
         match self.state {
             SessionState::Paused => {
                 let pause_time = Utc::now() - self.last_activity;
-                self.pause_duration = self.pause_duration + pause_time;
+                self.pause_duration += pause_time;
                 self.state = SessionState::InProgress;
                 self.last_activity = Utc::now();
                 Ok(())
@@ -92,7 +92,7 @@ impl QuizSession {
             _ => Err("Can only resume a paused session".to_string()),
         }
     }
-    
+
     pub fn submit_answer(
         &mut self,
         question: &Question,
@@ -102,13 +102,15 @@ impl QuizSession {
         if self.state != SessionState::InProgress {
             return Err("Session is not in progress".to_string());
         }
-        
+
         let is_correct = question.validate_answer(&answer)?;
-        
+
         // Check if we already have a response for this question
-        let existing_response = self.responses.iter_mut()
+        let existing_response = self
+            .responses
+            .iter_mut()
             .find(|r| r.question_id == question.id);
-        
+
         if let Some(response) = existing_response {
             response.attempts += 1;
             response.answer = answer;
@@ -125,33 +127,33 @@ impl QuizSession {
                 submitted_at: Utc::now(),
             });
         }
-        
+
         self.last_activity = Utc::now();
         Ok(is_correct)
     }
-    
+
     pub fn skip_question(&mut self, question_index: usize) {
         if !self.skipped_questions.contains(&question_index) {
             self.skipped_questions.push(question_index);
         }
         self.last_activity = Utc::now();
     }
-    
+
     pub fn next_question(&mut self) -> Result<(), String> {
         if self.state != SessionState::InProgress {
             return Err("Session is not in progress".to_string());
         }
-        
+
         self.current_question_index += 1;
         self.last_activity = Utc::now();
         Ok(())
     }
-    
+
     pub fn previous_question(&mut self) -> Result<(), String> {
         if self.state != SessionState::InProgress {
             return Err("Session is not in progress".to_string());
         }
-        
+
         if self.current_question_index > 0 {
             self.current_question_index -= 1;
             self.last_activity = Utc::now();
@@ -160,7 +162,7 @@ impl QuizSession {
             Err("Already at first question".to_string())
         }
     }
-    
+
     pub fn complete(&mut self) -> Result<SessionSummary, String> {
         match self.state {
             SessionState::InProgress => {
@@ -171,27 +173,23 @@ impl QuizSession {
             _ => Err("Can only complete an in-progress session".to_string()),
         }
     }
-    
+
     pub fn abandon(&mut self) {
         self.state = SessionState::Abandoned;
         self.end_time = Some(Utc::now());
     }
-    
+
     pub fn generate_summary(&self) -> SessionSummary {
         let total_questions = self.responses.len() + self.skipped_questions.len();
-        let correct_answers = self.responses.iter()
-            .filter(|r| r.is_correct)
-            .count();
-        let total_time_seconds: u32 = self.responses.iter()
-            .map(|r| r.time_taken_seconds)
-            .sum();
-        
+        let correct_answers = self.responses.iter().filter(|r| r.is_correct).count();
+        let total_time_seconds: u32 = self.responses.iter().map(|r| r.time_taken_seconds).sum();
+
         let score = if total_questions > 0 {
             correct_answers as f32 / total_questions as f32
         } else {
             0.0
         };
-        
+
         let duration = if let (Some(start), Some(end)) = (self.start_time, self.end_time) {
             end - start - self.pause_duration
         } else if let Some(start) = self.start_time {
@@ -199,7 +197,7 @@ impl QuizSession {
         } else {
             Duration::zero()
         };
-        
+
         SessionSummary {
             session_id: self.id,
             quiz_id: self.quiz_id,
@@ -221,12 +219,12 @@ impl QuizSession {
             },
         }
     }
-    
+
     pub fn get_progress(&self, total_questions: usize) -> f32 {
         if total_questions == 0 {
             return 0.0;
         }
-        
+
         let answered = self.responses.len();
         answered as f32 / total_questions as f32
     }
@@ -250,7 +248,7 @@ impl SessionSummary {
     pub fn passed(&self, pass_threshold: f32) -> bool {
         self.score >= pass_threshold
     }
-    
+
     pub fn get_grade(&self) -> &'static str {
         match self.score {
             s if s >= 0.9 => "A",
@@ -266,31 +264,31 @@ impl SessionSummary {
 mod tests {
     use super::*;
     use crate::quiz::question::QuestionType;
-    
+
     #[test]
     fn test_session_lifecycle() {
         let mut session = QuizSession::new(Uuid::new_v4(), None);
-        
+
         assert_eq!(session.state, SessionState::NotStarted);
         assert!(session.start().is_ok());
         assert_eq!(session.state, SessionState::InProgress);
-        
+
         assert!(session.pause().is_ok());
         assert_eq!(session.state, SessionState::Paused);
-        
+
         assert!(session.resume().is_ok());
         assert_eq!(session.state, SessionState::InProgress);
-        
+
         let summary = session.complete().unwrap();
         assert_eq!(session.state, SessionState::Completed);
         assert_eq!(summary.score, 0.0); // No questions answered
     }
-    
+
     #[test]
     fn test_submit_answer() {
         let mut session = QuizSession::new(Uuid::new_v4(), None);
         session.start().unwrap();
-        
+
         let question = Question::new(
             QuestionType::TrueFalse {
                 statement: "Test".to_string(),
@@ -300,13 +298,11 @@ mod tests {
             Uuid::new_v4(),
             0.5,
         );
-        
-        let result = session.submit_answer(
-            &question,
-            Answer::TrueFalse(true),
-            30,
-        ).unwrap();
-        
+
+        let result = session
+            .submit_answer(&question, Answer::TrueFalse(true), 30)
+            .unwrap();
+
         assert!(result);
         assert_eq!(session.responses.len(), 1);
         assert!(session.responses[0].is_correct);

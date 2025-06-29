@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use super::session::{QuizSession, QuestionResponse};
+use super::session::{QuestionResponse, QuizSession};
 use super::Question;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Score {
@@ -23,17 +23,20 @@ pub struct ScoreComponents {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ScoringStrategy {
-    Simple,                    // Just correct/incorrect
-    TimeWeighted {            // Factor in response time
+    Simple, // Just correct/incorrect
+    TimeWeighted {
+        // Factor in response time
         base_time_seconds: u32,
         penalty_per_second: f32,
     },
-    DifficultyWeighted {      // Factor in question difficulty
+    DifficultyWeighted {
+        // Factor in question difficulty
         easy_multiplier: f32,
         medium_multiplier: f32,
         hard_multiplier: f32,
     },
-    Adaptive {                // Comprehensive scoring
+    Adaptive {
+        // Comprehensive scoring
         time_weight: f32,
         difficulty_weight: f32,
         streak_weight: f32,
@@ -42,46 +45,51 @@ pub enum ScoringStrategy {
 }
 
 impl ScoringStrategy {
-    pub fn calculate_score(
-        &self,
-        session: &QuizSession,
-        questions: &[Question],
-    ) -> Score {
+    pub fn calculate_score(&self, session: &QuizSession, questions: &[Question]) -> Score {
         match self {
             ScoringStrategy::Simple => self.simple_score(session, questions),
-            ScoringStrategy::TimeWeighted { base_time_seconds, penalty_per_second } => {
-                self.time_weighted_score(session, questions, *base_time_seconds, *penalty_per_second)
-            }
-            ScoringStrategy::DifficultyWeighted { easy_multiplier, medium_multiplier, hard_multiplier } => {
-                self.difficulty_weighted_score(
-                    session,
-                    questions,
-                    *easy_multiplier,
-                    *medium_multiplier,
-                    *hard_multiplier,
-                )
-            }
-            ScoringStrategy::Adaptive { time_weight, difficulty_weight, streak_weight, consistency_weight } => {
-                self.adaptive_score(
-                    session,
-                    questions,
-                    *time_weight,
-                    *difficulty_weight,
-                    *streak_weight,
-                    *consistency_weight,
-                )
-            }
+            ScoringStrategy::TimeWeighted {
+                base_time_seconds,
+                penalty_per_second,
+            } => self.time_weighted_score(
+                session,
+                questions,
+                *base_time_seconds,
+                *penalty_per_second,
+            ),
+            ScoringStrategy::DifficultyWeighted {
+                easy_multiplier,
+                medium_multiplier,
+                hard_multiplier,
+            } => self.difficulty_weighted_score(
+                session,
+                questions,
+                *easy_multiplier,
+                *medium_multiplier,
+                *hard_multiplier,
+            ),
+            ScoringStrategy::Adaptive {
+                time_weight,
+                difficulty_weight,
+                streak_weight,
+                consistency_weight,
+            } => self.adaptive_score(
+                session,
+                questions,
+                *time_weight,
+                *difficulty_weight,
+                *streak_weight,
+                *consistency_weight,
+            ),
         }
     }
-    
+
     fn simple_score(&self, session: &QuizSession, questions: &[Question]) -> Score {
         let total = questions.len() as f32;
-        let correct = session.responses.iter()
-            .filter(|r| r.is_correct)
-            .count() as f32;
-        
+        let correct = session.responses.iter().filter(|r| r.is_correct).count() as f32;
+
         let raw_score = if total > 0.0 { correct / total } else { 0.0 };
-        
+
         Score {
             raw_score,
             weighted_score: raw_score,
@@ -97,7 +105,7 @@ impl ScoringStrategy {
             },
         }
     }
-    
+
     fn time_weighted_score(
         &self,
         session: &QuizSession,
@@ -106,10 +114,9 @@ impl ScoringStrategy {
         penalty_per_second: f32,
     ) -> Score {
         let mut total_score = 0.0;
-        let question_map: std::collections::HashMap<_, _> = questions.iter()
-            .map(|q| (q.id, q))
-            .collect();
-        
+        let question_map: std::collections::HashMap<_, _> =
+            questions.iter().map(|q| (q.id, q)).collect();
+
         for response in &session.responses {
             if let Some(_question) = question_map.get(&response.question_id) {
                 let base_points = if response.is_correct { 1.0 } else { 0.0 };
@@ -118,15 +125,19 @@ impl ScoringStrategy {
                 } else {
                     0.0
                 };
-                
+
                 let points = (base_points - time_penalty).max(0.0);
                 total_score += points;
             }
         }
-        
+
         let max_score = questions.len() as f32;
-        let weighted_score = if max_score > 0.0 { total_score / max_score } else { 0.0 };
-        
+        let weighted_score = if max_score > 0.0 {
+            total_score / max_score
+        } else {
+            0.0
+        };
+
         Score {
             raw_score: self.simple_score(session, questions).raw_score,
             weighted_score,
@@ -142,7 +153,7 @@ impl ScoringStrategy {
             },
         }
     }
-    
+
     fn difficulty_weighted_score(
         &self,
         session: &QuizSession,
@@ -153,7 +164,7 @@ impl ScoringStrategy {
     ) -> Score {
         let mut total_score = 0.0;
         let mut max_possible = 0.0;
-        
+
         // Calculate max possible from all questions
         for question in questions {
             let multiplier = match question.difficulty {
@@ -163,12 +174,11 @@ impl ScoringStrategy {
             };
             max_possible += multiplier;
         }
-        
+
         // Add scores for correct answers
-        let question_map: std::collections::HashMap<_, _> = questions.iter()
-            .map(|q| (q.id, q))
-            .collect();
-            
+        let question_map: std::collections::HashMap<_, _> =
+            questions.iter().map(|q| (q.id, q)).collect();
+
         for response in &session.responses {
             if let Some(question) = question_map.get(&response.question_id) {
                 if response.is_correct {
@@ -181,10 +191,14 @@ impl ScoringStrategy {
                 }
             }
         }
-        
-        let weighted_score = if max_possible > 0.0 { total_score / max_possible } else { 0.0 };
+
+        let weighted_score = if max_possible > 0.0 {
+            total_score / max_possible
+        } else {
+            0.0
+        };
         let raw_score = self.simple_score(session, questions).raw_score;
-        
+
         Score {
             raw_score,
             weighted_score,
@@ -200,7 +214,7 @@ impl ScoringStrategy {
             },
         }
     }
-    
+
     fn adaptive_score(
         &self,
         session: &QuizSession,
@@ -211,41 +225,45 @@ impl ScoringStrategy {
         consistency_weight: f32,
     ) -> Score {
         let total_weight = time_weight + difficulty_weight + streak_weight + consistency_weight;
-        
+
         // Calculate base correctness score
         let correctness_score = self.simple_score(session, questions).raw_score;
-        
+
         // Calculate time score
         let time_score = if session.responses.is_empty() {
             0.0 // No time score if no responses
         } else {
-            let avg_time: f32 = session.responses.iter()
+            let avg_time: f32 = session
+                .responses
+                .iter()
                 .map(|r| r.time_taken_seconds as f32)
-                .sum::<f32>() / session.responses.len() as f32;
-            let expected_avg_time: f32 = questions.iter()
+                .sum::<f32>()
+                / session.responses.len() as f32;
+            let expected_avg_time: f32 = questions
+                .iter()
                 .map(|q| q.estimated_time_seconds as f32)
-                .sum::<f32>() / questions.len().max(1) as f32;
+                .sum::<f32>()
+                / questions.len().max(1) as f32;
             (expected_avg_time / avg_time.max(1.0)).min(1.0)
         };
-        
+
         // Calculate difficulty score
         let difficulty_score = self.calculate_difficulty_score(session, questions);
-        
+
         // Calculate streak score
         let streak_score = self.calculate_streak_score(&session.responses);
-        
+
         // Calculate consistency score
         let consistency_score = self.calculate_consistency_score(&session.responses);
-        
+
         // Combine scores
-        let weighted_score = (
-            correctness_score * 1.0 + // Base score always counts
+        let weighted_score = (correctness_score * 1.0 + // Base score always counts
             time_score * time_weight +
             difficulty_score * difficulty_weight +
             streak_score * streak_weight +
-            consistency_score * consistency_weight
-        ) / (1.0 + total_weight);
-        
+            consistency_score * consistency_weight)
+            / (1.0 + total_weight);
+
         Score {
             raw_score: correctness_score,
             weighted_score,
@@ -261,15 +279,14 @@ impl ScoringStrategy {
             },
         }
     }
-    
+
     fn calculate_difficulty_score(&self, session: &QuizSession, questions: &[Question]) -> f32 {
-        let question_map: std::collections::HashMap<_, _> = questions.iter()
-            .map(|q| (q.id, q))
-            .collect();
-        
+        let question_map: std::collections::HashMap<_, _> =
+            questions.iter().map(|q| (q.id, q)).collect();
+
         let mut difficulty_sum = 0.0;
         let mut correct_difficulty_sum = 0.0;
-        
+
         for response in &session.responses {
             if let Some(question) = question_map.get(&response.question_id) {
                 difficulty_sum += question.difficulty;
@@ -278,22 +295,22 @@ impl ScoringStrategy {
                 }
             }
         }
-        
+
         if difficulty_sum > 0.0 {
             correct_difficulty_sum / difficulty_sum
         } else {
             0.0
         }
     }
-    
+
     fn calculate_streak_score(&self, responses: &[QuestionResponse]) -> f32 {
         if responses.is_empty() {
             return 0.0;
         }
-        
+
         let mut max_streak = 0;
         let mut current_streak = 0;
-        
+
         for response in responses {
             if response.is_correct {
                 current_streak += 1;
@@ -302,10 +319,10 @@ impl ScoringStrategy {
                 current_streak = 0;
             }
         }
-        
+
         max_streak as f32 / responses.len() as f32
     }
-    
+
     fn calculate_consistency_score(&self, responses: &[QuestionResponse]) -> f32 {
         if responses.is_empty() {
             return 0.0; // No consistency score without responses
@@ -313,20 +330,20 @@ impl ScoringStrategy {
         if responses.len() == 1 {
             return 1.0; // Perfect consistency with 1 response
         }
-        
+
         // Calculate variance in response times
-        let times: Vec<f32> = responses.iter()
+        let times: Vec<f32> = responses
+            .iter()
             .map(|r| r.time_taken_seconds as f32)
             .collect();
-        
+
         let mean_time = times.iter().sum::<f32>() / times.len() as f32;
-        let variance = times.iter()
-            .map(|t| (t - mean_time).powi(2))
-            .sum::<f32>() / times.len() as f32;
-        
+        let variance =
+            times.iter().map(|t| (t - mean_time).powi(2)).sum::<f32>() / times.len() as f32;
+
         let std_dev = variance.sqrt();
         let cv = std_dev / mean_time; // Coefficient of variation
-        
+
         // Lower CV means more consistent, map to 0-1 score
         (1.0 / (1.0 + cv)).min(1.0)
     }
@@ -335,14 +352,14 @@ impl ScoringStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::quiz::question::{Answer, QuestionType};
     use uuid::Uuid;
-    use crate::quiz::question::{QuestionType, Answer};
-    
+
     #[test]
     fn test_simple_scoring() {
         let strategy = ScoringStrategy::Simple;
         let mut session = QuizSession::new(Uuid::new_v4(), None);
-        
+
         // Create test questions
         let questions = vec![
             Question::new(
@@ -364,7 +381,7 @@ mod tests {
                 0.5,
             ),
         ];
-        
+
         // Add responses
         session.responses.push(QuestionResponse {
             question_id: questions[0].id,
@@ -374,7 +391,7 @@ mod tests {
             attempts: 1,
             submitted_at: chrono::Utc::now(),
         });
-        
+
         session.responses.push(QuestionResponse {
             question_id: questions[1].id,
             answer: Answer::TrueFalse(true),
@@ -383,7 +400,7 @@ mod tests {
             attempts: 1,
             submitted_at: chrono::Utc::now(),
         });
-        
+
         let score = strategy.calculate_score(&session, &questions);
         assert_eq!(score.raw_score, 0.5); // 1 correct out of 2
         assert_eq!(score.weighted_score, 0.5);

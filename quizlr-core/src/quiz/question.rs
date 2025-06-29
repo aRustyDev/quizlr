@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", content = "data")]
@@ -114,20 +114,34 @@ impl Question {
             updated_at: now,
         }
     }
-    
+
     pub fn validate_answer(&self, answer: &Answer) -> Result<bool, String> {
         match (&self.question_type, answer) {
             (QuestionType::TrueFalse { correct_answer, .. }, Answer::TrueFalse(user_answer)) => {
                 Ok(correct_answer == user_answer)
             }
-            (QuestionType::MultipleChoice { correct_index, options, .. }, Answer::MultipleChoice(user_index)) => {
+            (
+                QuestionType::MultipleChoice {
+                    correct_index,
+                    options,
+                    ..
+                },
+                Answer::MultipleChoice(user_index),
+            ) => {
                 if *user_index >= options.len() {
                     Err("Invalid option index".to_string())
                 } else {
                     Ok(correct_index == user_index)
                 }
             }
-            (QuestionType::MultiSelect { correct_indices, options, .. }, Answer::MultiSelect(user_indices)) => {
+            (
+                QuestionType::MultiSelect {
+                    correct_indices,
+                    options,
+                    ..
+                },
+                Answer::MultiSelect(user_indices),
+            ) => {
                 if user_indices.iter().any(|&idx| idx >= options.len()) {
                     Err("Invalid option index".to_string())
                 } else {
@@ -138,17 +152,28 @@ impl Question {
                     Ok(user_sorted == correct_sorted)
                 }
             }
-            (QuestionType::FillInTheBlank { correct_answers, case_sensitive, .. }, Answer::FillInTheBlank(user_answers)) => {
+            (
+                QuestionType::FillInTheBlank {
+                    correct_answers,
+                    case_sensitive,
+                    ..
+                },
+                Answer::FillInTheBlank(user_answers),
+            ) => {
                 if user_answers.len() != correct_answers.len() {
                     Err("Wrong number of answers".to_string())
                 } else {
-                    let all_correct = user_answers.iter().zip(correct_answers.iter()).all(|(user, correct)| {
-                        if *case_sensitive {
-                            user == correct
-                        } else {
-                            user.to_lowercase() == correct.to_lowercase()
-                        }
-                    });
+                    let all_correct =
+                        user_answers
+                            .iter()
+                            .zip(correct_answers.iter())
+                            .all(|(user, correct)| {
+                                if *case_sensitive {
+                                    user == correct
+                                } else {
+                                    user.to_lowercase() == correct.to_lowercase()
+                                }
+                            });
                     Ok(all_correct)
                 }
             }
@@ -162,16 +187,14 @@ impl Question {
             _ => Err("Answer type does not match question type".to_string()),
         }
     }
-    
+
     pub fn get_explanation(&self) -> Option<&str> {
         match &self.question_type {
-            QuestionType::TrueFalse { explanation, .. } |
-            QuestionType::MultipleChoice { explanation, .. } |
-            QuestionType::MultiSelect { explanation, .. } |
-            QuestionType::FillInTheBlank { explanation, .. } |
-            QuestionType::MatchPairs { explanation, .. } => {
-                explanation.as_deref()
-            }
+            QuestionType::TrueFalse { explanation, .. }
+            | QuestionType::MultipleChoice { explanation, .. }
+            | QuestionType::MultiSelect { explanation, .. }
+            | QuestionType::FillInTheBlank { explanation, .. }
+            | QuestionType::MatchPairs { explanation, .. } => explanation.as_deref(),
             _ => None,
         }
     }
@@ -180,7 +203,7 @@ impl Question {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_true_false_validation() {
         let question = Question::new(
@@ -192,11 +215,11 @@ mod tests {
             Uuid::new_v4(),
             0.3,
         );
-        
+
         assert!(question.validate_answer(&Answer::TrueFalse(true)).unwrap());
         assert!(!question.validate_answer(&Answer::TrueFalse(false)).unwrap());
     }
-    
+
     #[test]
     fn test_multiple_choice_validation() {
         let question = Question::new(
@@ -209,8 +232,12 @@ mod tests {
             Uuid::new_v4(),
             0.1,
         );
-        
-        assert!(question.validate_answer(&Answer::MultipleChoice(1)).unwrap());
-        assert!(!question.validate_answer(&Answer::MultipleChoice(0)).unwrap());
+
+        assert!(question
+            .validate_answer(&Answer::MultipleChoice(1))
+            .unwrap());
+        assert!(!question
+            .validate_answer(&Answer::MultipleChoice(0))
+            .unwrap());
     }
 }

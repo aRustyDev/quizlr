@@ -29,21 +29,21 @@ getrandom = { version = "0.2", features = ["js"] }
 petgraph = { version = "0.6", features = ["serde-1"] }
 
 # Cryptography
-ring = "0.17"
+ring = { version = "0.17", optional = true }
 base64 = "0.22"
 
 # LLM integration  
-genai = "0.3"
+genai = { version = "0.3", optional = true }
 
 # OAuth/OIDC
-openidconnect = "4.0"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+openidconnect = { version = "4.0", optional = true }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
 
 # GitHub API
-octocrab = "0.44"
+octocrab = { version = "0.44", optional = true }
 
 # PDF parsing
-lopdf = "0.35"
+lopdf = { version = "0.35", optional = true }
 
 # Storage and async
 async-trait = "0.1"
@@ -52,9 +52,9 @@ async-trait = "0.1"
 rand = "0.8"
 
 # OpenTelemetry
-opentelemetry = "0.24"
-opentelemetry_sdk = { version = "0.24", features = ["rt-tokio"] }
-tracing-opentelemetry = "0.25"
+opentelemetry = { version = "0.24", optional = true }
+opentelemetry_sdk = { version = "0.24", features = ["rt-tokio"], optional = true }
+tracing-opentelemetry = { version = "0.25", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", features = [
@@ -64,6 +64,12 @@ web-sys = { version = "0.3", features = [
     "console",
 ] }
 js-sys = "0.3"
+console_error_panic_hook = "0.1"
+
+[features]
+default = ["native"]
+native = ["openidconnect", "reqwest", "octocrab", "genai", "tokio/net", "tokio/fs", "tokio/time", "opentelemetry", "opentelemetry_sdk", "tracing-opentelemetry", "ring", "lopdf"]
+wasm = ["getrandom/js"]
 
 [dev-dependencies]
 mockall = { workspace = true }

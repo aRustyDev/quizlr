@@ -21,7 +21,7 @@ chrono = { workspace = true }
 uuid = { workspace = true }
 
 # Core library
-quizlr-core = { path = "../quizlr-core" }
+quizlr-core = { path = "../quizlr-core", default-features = false, features = ["wasm"] }
 
 # Leptos CSR
 leptos = "0.7"

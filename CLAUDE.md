@@ -2,6 +2,13 @@
 
 This document contains critical guidelines and requirements for Claude when working on the Quizlr project.
 
+## IMPORTANT!!
+
+- Ask questions whenever you are unsure about something
+- Ask for clarification whenever something is ambiguous or unclear
+- Ask follow up questions when an answer was not helpful or did not fully address your question
+- Repeat your understanding of my response back to me to ensure clarity and accuracy
+
 ## Using the Justfile
 
 The Justfile contains all development automation commands. When working on this project:
@@ -110,38 +117,42 @@ Pre-commit checks:
 4. TODO/FIXME detection
 
 ### 9. Issue Tracking
-
 **REQUIREMENT**: Create GitHub issues for EVERY problem:
 
-1. **Create Issue**: Document the problem clearly
-   ```
-   Title: Build fails with "tokio feature mismatch"
-   Body: 
-   - Steps to reproduce
-   - Expected behavior
-   - Actual behavior
-   - Environment details
-   ```
+Common Commands:
+- `git config remote.origin.url | cat` to get the remote URL for use with `gh` commands
+- `git config user.name | cat` to get the person to assign things with the `gh` commands
 
-2. **Update Issue**: Add investigation notes and potential solutions
-   ```
-   Investigation:
+1. **Create Issue**: Document the problem clearly
+  ```markdown
+  Title: Build fails with "tokio feature mismatch"
+  Body:
+  - Steps to reproduce
+  - Expected behavior
+  - Actual behavior
+  - Environment details (Language version, OS, etc.)
+  - Latest related commit hash
+  ```
+
+2. **Update Issue**: Add investigation notes and potential solutions as comments on the issue, update labels as needed
+  ```markdown
+  Investigation:
    - Found tokio is using "net" feature in WASM build
    - WASM doesn't support networking features
-   
-   Solution:
-   - Add conditional compilation for features
-   ```
 
-3. **Close Issue**: Reference in commit message
-   ```
-   fix(build): conditionally compile tokio features for WASM
-   
+  Possible-Solution:
+   - Add conditional compilation for features
+  ```
+
+3. **Close Issue**: Reference issue in commit message, add a comment with the SOLUTION & LESSONS LEARNED from the issue, and close the issue
+  ```markdown
+  fix(build): conditionally compile tokio features for WASM
+
    Adds feature flags to separate native and WASM builds,
    preventing tokio networking features from being included
    in WASM targets.
-   
-   Closes #42
+
+  Fixes #42
    ```
 
 ## Development Workflow

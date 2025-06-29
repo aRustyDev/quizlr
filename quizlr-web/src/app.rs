@@ -1,28 +1,22 @@
 use leptos::prelude::*;
-use leptos_meta::{provide_meta_context, MetaTags, Stylesheet, Title};
-// use leptos_router::components::Outlet;
 
 #[component]
 pub fn App() -> impl IntoView {
-    provide_meta_context();
-
     view! {
-        <Title text="Quizlr - Adaptive Learning Platform"/>
-        <MetaTags/>
-        <Stylesheet id="leptos" href="/pkg/quizlr.css"/>
-        
-        <div class="min-h-screen bg-gray-50">
-            <header class="bg-white shadow">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-3xl font-bold text-gray-900">
-                        "Quizlr"
-                    </h1>
-                </div>
+        <div class="app-container">
+            <header>
+                <h1>{"Quizlr"}</h1>
+                <p>{"Adaptive Learning Platform"}</p>
             </header>
-            
-            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                <div class="px-4 py-6 sm:px-0">
-                    <div>"Welcome to Quizlr!"</div>
+
+            <main>
+                <div class="card">
+                    <h2>{"Welcome to Quizlr!"}</h2>
+                    <p>{"Get started by creating your first quiz or importing existing content."}</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="primary">{"Create Quiz"}</button>
+                        <button class="secondary" style="margin-left: 0.5rem;">{"Import Content"}</button>
+                    </div>
                 </div>
             </main>
         </div>
