@@ -1,0 +1,22 @@
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Videos and screenshots
+videos/
+screenshots/
+
+# JUnit reports
+*.xml
+
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
