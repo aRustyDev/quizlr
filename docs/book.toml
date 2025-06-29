@@ -18,7 +18,7 @@ use-default-preprocessors = true
 [output.html]
 default-theme = "rust"
 preferred-dark-theme = "ayu"
-curly-quotes = true
+smart-punctuation = true
 copy-fonts = true
 additional-css = []
 additional-js = []
