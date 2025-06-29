@@ -35,7 +35,7 @@ chrono = { version = "0.4", features = ["serde", "wasm-bindgen"] }
 uuid = { version = "1.11", features = ["v4", "serde", "js"] }
 
 # Configuration
-config = "0.14"
+config = "0.15"
 
 # Testing
 mockall = "0.13"
