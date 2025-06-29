@@ -3,9 +3,13 @@ use leptos::prelude::*;
 
 #[component]
 pub fn App() -> impl IntoView {
+    log!("App component mounting");
+
     // State for showing different views
     let (current_view, set_current_view) = signal("home".to_string());
     let (quizzes, _set_quizzes) = signal(Vec::<String>::new());
+
+    log!("Initial view: {}", current_view.get());
 
     // Event handlers
     let on_create_quiz = move |_| {

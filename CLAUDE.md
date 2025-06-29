@@ -210,9 +210,41 @@ just check-deps   # Check outdated
 just ci           # Run full CI
 ```
 
+## UI Development Requirements
+
+### REQUIREMENT: Visual Verification Before Committing
+
+**NEVER** commit UI changes without:
+
+1. **Running the dev server**: `just dev`
+2. **Opening the browser**: Navigate to http://localhost:3001
+3. **Verifying ALL elements are visible**:
+   - Header with title and subtitle
+   - Main content area
+   - All buttons and interactive elements
+   - Proper styling (not just black text on white)
+4. **Checking browser console** for any errors
+5. **Testing all interactive elements** work as expected
+
+### REQUIREMENT: CSS and Tailwind Guidelines
+
+1. **Prefer Tailwind utility classes** over custom CSS
+2. **Avoid global CSS resets** that conflict with Tailwind
+3. **Test for CSS conflicts**:
+   - Check that `* { margin: 0; padding: 0; }` is NOT present
+   - Ensure Tailwind classes are not overridden
+   - Verify computed styles match expectations
+
+### REQUIREMENT: Build Verification
+
+1. **Clean builds before testing**: Run `trunk clean` if UI issues occur
+2. **Check dist folder**: Verify CSS files contain expected content
+3. **Monitor build logs**: Look for SCSS compilation issues
+
 ## Remember
 
 - **Quality over speed** - Better to do it right than do it twice
 - **Tests are documentation** - Write clear, descriptive tests
 - **Small commits** - Each commit should be atomic and meaningful
 - **Communication** - Update issues with progress and blockers
+- **Visual verification** - Always manually check UI renders correctly

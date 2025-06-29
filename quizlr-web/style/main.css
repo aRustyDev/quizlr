@@ -1,16 +1,11 @@
-/* Minimal CSS - Most styling handled by Tailwind */
-
-/* Ensure the app takes full height */
-#app {
-  min-height: 100vh;
-}
-
-/* Animations */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
-
 .spinner {
   border: 3px solid #f3f3f3;
   border-top: 3px solid #0066cc;
@@ -20,3 +15,5 @@
   animation: spin 1s linear infinite;
   margin: 2rem auto;
 }
+
+/*# sourceMappingURL=main.css.map */
