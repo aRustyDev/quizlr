@@ -76,4 +76,24 @@ mod tests {
             assert!(!inner_html.is_empty(), "Main content should not be empty");
         }
     }
+
+    #[wasm_bindgen_test]
+    fn test_welcome_card_visible() {
+        // Given: The app is mounted
+        let window = window().expect("should have window");
+        let document = window.document().expect("should have document");
+
+        // Then: Welcome card should be visible
+        let welcome_heading = document.query_selector("h2").unwrap();
+        assert!(welcome_heading.is_some(), "Should find welcome heading");
+
+        if let Some(h2_elem) = welcome_heading {
+            let text_content = h2_elem.text_content().unwrap_or_default();
+            assert!(
+                text_content.contains("Welcome"),
+                "Should show welcome message, found: '{}'",
+                text_content
+            );
+        }
+    }
 }
